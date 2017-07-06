@@ -24,6 +24,14 @@ int main(int argc, char const *argv[])
     for (int j = 0; j < 9; ++j)
       std::cout << a(i, j) << std::endl;
 
+    auto i = feather::index<5>({1,2,3,4,5});
+
+    std::cout << i(0,0,0,0,1) << std::endl;
+    std::cout << i(0,0,0,1,0) << std::endl;
+    std::cout << i(0,0,1,0,0) << std::endl;
+    std::cout << i(0,1,0,0,0) << std::endl;
+      
+
 
   return 0;
   

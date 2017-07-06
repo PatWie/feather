@@ -45,6 +45,7 @@ public:
 // tensor<Dtype, cpu>& tensor<Dtype, gpu>::tester<gpu>(const tensor<Dtype, gpu> &rhs) { return *this; }
 
 
+
 template <>
 inline const float tensor<float, gpu>::test() { return 1; }
 
