@@ -20,7 +20,7 @@ int main(int argc, char const *argv[]) {
   tensor<float, cpu> bcc = tensor<float, cpu>({9, 9});
 
   bc.allocate();
-  for (int i = 0; i < 9 * 9; ++i) bc.ptr()[i] = i;
+  for (int i = 0; i < 9 * 9; ++i) bc[i] = i;
 
   bg = bc;
   bcc = bg;

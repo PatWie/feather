@@ -42,8 +42,12 @@ public:
         return buffer;
     }
 
-    Dtype* ptr(int i){
-        return buffer + i;
+    Dtype& operator[](int i){
+        return buffer[i];
+    }
+
+    Dtype operator[](int i) const{
+        return buffer[i];
     }
 
     size_t size() const {
