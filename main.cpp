@@ -6,33 +6,27 @@
 #include "feather/tensor.h"
 
 
+using cpu = feather::cpu;
+using gpu = feather::gpu;
+template<typename Dtype, typename xpu>
+using tensor = feather::tensor<Dtype, xpu>;
+
+int main(int argc, char const *argv[]) {
 
 
-int main(int argc, char const *argv[])
-{
+  tensor<float, cpu> bc = tensor<float, cpu>({9, 9});
+  tensor<float, gpu> bg = tensor<float, gpu>({9, 9});
+  tensor<float, cpu> bcc = tensor<float, cpu>({9, 9});
 
-  float *data = new float[9*9];
-  for (int i = 0; i < 9*9; ++i) data[i] = i;
+  bc.buffer = new float[9 * 9];
+  for (int i = 0; i < 9 * 9; ++i) bc.buffer[i] = i;
 
-  auto a = feather::tensor<float>(data, {9,9});
+  bg = bc;
+  bcc = bg;
 
-
-    auto b = feather::tensor<float>(data, {9,9});
-    b = a;
-
-  for (int i = 0; i < 9; ++i)
-    for (int j = 0; j < 9; ++j)
-      std::cout << a(i, j) << std::endl;
-
-    auto i = feather::index<5>({1,2,3,4,5});
-
-    std::cout << i(0,0,0,0,1) << std::endl;
-    std::cout << i(0,0,0,1,0) << std::endl;
-    std::cout << i(0,0,1,0,0) << std::endl;
-    std::cout << i(0,1,0,0,0) << std::endl;
-      
-
-
+  std::cout << bcc(1,0) << std::endl;
+  std::cout << bcc(1,1) << std::endl;
+ 
   return 0;
-  
+
 }
