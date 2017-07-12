@@ -11,59 +11,82 @@
 
 namespace feather {
 
-// template<typename Dtype, typename xpu=gpu>
 template<typename Dtype, typename xpu>
 class tensor {
-  public:
+  // public:
     Dtype *buffer;
-    std::vector<size_t> shape;
+    std::vector<size_t> shape_;
     size_t len;
     bool owner;
 
-// public:
+public:
     tensor(std::vector<size_t> s)
-        : buffer(nullptr), shape(s), owner(true) {
+        : buffer(nullptr), shape_(s), owner(true) {
         _update_len();
     }
     void _update_len() {
         len = 1;
-        for (size_t i : shape)
+        for (size_t i : shape_)
             len = len * i;
+    }
+
+    const std::vector<size_t> shape() const{
+        return shape_;
+    }
+
+    const Dtype* const_ptr() const{
+        return buffer;
+    }
+
+    Dtype* ptr(){
+        return buffer;
+    }
+
+    Dtype* ptr(int i){
+        return buffer + i;
+    }
+
+    size_t size() const {
+        return len;
     }
 
     template<typename... T>
     inline Dtype operator()(const T&... t) {
         const int n = sizeof...(T);
-        return (Dtype) buffer[index<n>(shape.data())(t...)];
+        return (Dtype) buffer[index<n>(shape_.data())(t...)];
     }
 
-    template<typename in>
-    tensor<Dtype, xpu>& operator=(tensor<Dtype, in> &rhs) {
+    void allocate(){
+        if (std::is_same<xpu, cpu>::value) {
+            buffer = new Dtype[len];
+        }
+        if (std::is_same<xpu, gpu>::value) {
+            cudaMalloc( (void**)&buffer, len * sizeof(Dtype) );
+        }
+    }
 
-        shape = rhs.shape;
+    template<typename in_device>
+    tensor<Dtype, xpu>& operator=(tensor<Dtype, in_device> &rhs) {
+
+        shape_ = rhs.shape();
         _update_len();
 
-        if (std::is_same<xpu, in>::value) {
-            buffer = rhs.buffer;
+        if (std::is_same<xpu, in_device>::value) {
+            buffer = rhs.ptr();
             return *this;
         }
-        if (std::is_same<gpu, in>::value && std::is_same<cpu, xpu>::value) {
-            // gpu --> cpu
-            if (buffer == nullptr) 
-                buffer = new Dtype[len];
 
-            cudaMemcpy( buffer, rhs.buffer, len * sizeof(Dtype), cudaMemcpyDeviceToHost );
-            return *this;
-        }
-        if (std::is_same<cpu, in>::value && std::is_same<gpu, xpu>::value) {
-            // cpu --> gpu
-            shape = rhs.shape;
-            if (buffer == nullptr) 
-                cudaMalloc( (void**)&buffer, len * sizeof(Dtype) );
+        if (buffer == nullptr) 
+            allocate();
 
-            cudaMemcpy( buffer, rhs.buffer, len * sizeof(Dtype), cudaMemcpyHostToDevice );
-            return *this;
-        }
+
+        if (std::is_same<gpu, in_device>::value && std::is_same<cpu, xpu>::value)
+            cudaMemcpy( buffer, rhs.const_ptr(), len * sizeof(Dtype), cudaMemcpyDeviceToHost );
+
+        if (std::is_same<cpu, in_device>::value && std::is_same<gpu, xpu>::value)
+            cudaMemcpy( buffer, rhs.const_ptr(), len * sizeof(Dtype), cudaMemcpyHostToDevice );
+
+        return *this;
 
     }
 
