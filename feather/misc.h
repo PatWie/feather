@@ -1,32 +1,55 @@
 #ifndef MISC_H
 #define MISC_H
 
-#include <array>
+#include <iostream>
 
 namespace feather {
-struct cpu
-{
-    static const bool CpuDevice = true;
+struct cpu {
+  static const bool CpuDevice = true;
 };
 
-struct gpu
-{
-    static const bool CpuDevice = false;
+struct gpu {
+  static const bool CpuDevice = false;
 };
 
 
 
-// meta functions
-template<typename T>
-constexpr T meta_prod(T x) { return x; }
+template <typename T, typename U, typename... Args>
+struct check_same {
+    static const bool value = std::is_same<T, U>::value && check_same<U, Args...>::value;
+};
+ 
+template <typename T, typename U>
+struct check_same<T, U> {
+    static const bool value = std::is_same<T, U>::value;
+};
 
-template<typename T, typename... Ts>
-constexpr T meta_prod(T x, Ts... xs) { return x * meta_prod(xs...); }
 
 
+#define runtime_assert(condition, message) (condition                                                     \
+                                            ? ((void)0)                                                           \
+                                            : ::feather::assertion::detail::assertion_failed_msg(#condition, message, \
+                                                                                             __PRETTY_FUNCTION__, __FILE__, __LINE__))
 
+namespace assertion {
+namespace detail {
 
-
+/*!
+ * \brief Function call when an assertion failed
+ */
+template <typename CharT>
+void assertion_failed_msg(const CharT* expr, const char* msg, const char* function, const char* file, size_t line) {
+  std::cerr
+      << "***** Internal Program Error - assertion (" << expr << ") failed in "
+      << function << ":\n"
+      << file << '(' << line << "): " << msg << std::endl;
+  std::abort();
 }
+
+} // end of detail namespace
+} // end of assertion namespace
+
+
+} // namespace feather
 
 #endif
