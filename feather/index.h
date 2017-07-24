@@ -6,48 +6,87 @@
 
 namespace feather {
 
+// template<size_t start, size_t AXES>
+// struct prod_func
+// {
+//   constexpr inline size_t operator()(size_t const* arr) const
+//   {
+//     return arr[start] * prod_func < start + 1, AXES > ()(arr);
+//   }
+// } ;
+
+// template<size_t AXES>
+// struct prod_func<AXES, AXES>
+// {
+//   constexpr inline size_t operator()(size_t const*  arr) const
+//   {
+//     return 1;
+//   }
+// } ;
+
 template<int AXES>
 class index
 {
-  size_t *shapes;
-  size_t offsets[AXES];
+  size_t shapes[AXES];
+
 public:
-  index(size_t *s) : shapes(s) {
-    _cache();
-  }
-  index(std::array<size_t, AXES> s) : shapes(s.data()) {
-    _cache();
+
+  template <typename... Dims>
+  index(Dims... dims)  : shapes {dims...} {}
+
+  template <typename... Dims>
+  constexpr inline size_t operator()(int off, Dims... dims) const {
+    return off * (prod_func < AXES - (sizeof...(Dims)), AXES > ()(shapes)) + operator()(dims...);
   }
 
-  void _cache(){
-    offsets[AXES - 1] = 1;
-    for (int i = AXES - 2; i >= 0; --i)
-      offsets[i] = offsets[i + 1] * shapes[i + 1];
-  }
-
-  constexpr inline size_t operator[](size_t i) const
-  {
-    return shapes[i];
-  }
-
-  constexpr inline size_t offset(int d) const {
-    return offsets[AXES - d - 1];
-  }
-
-  constexpr inline size_t i_(int t) const{
+  constexpr inline size_t operator()(int t) const {
     return t;
   }
 
-  template <typename... Rest>
-  constexpr inline size_t i_(int axis, int pos, Rest... rest) const{
-    return pos * offset(axis - 1) + i_(axis - 1, rest...);
-  }
 
-  template <typename... Rest>
-  constexpr inline size_t operator()(int pos, Rest... rest) const {
-    return pos * offset(AXES - 1) + i_(AXES - 1, rest...);
-  }
 };
+
+
+
+// template<size_t start, size_t AXES>
+// struct prod_func
+// {
+//   constexpr inline size_t operator()(const std::array<const size_t, AXES> arr) const
+//   {
+//     return arr[start] * prod_func < start + 1, AXES > ()(arr);
+//   }
+// } ;
+
+// template<size_t AXES>
+// struct prod_func<AXES, AXES>
+// {
+//   constexpr inline size_t operator()(const std::array<const size_t, AXES> arr) const
+//   {
+//     return 1;
+//   }
+// } ;
+
+// template<int AXES>
+// class index
+// {
+//   const std::array<const size_t, AXES> shapes;
+
+// public:
+
+//   index(std::array<const size_t, AXES> s) : shapes(s) {}
+
+//   template <typename... Dims>
+//   constexpr inline size_t operator()(int off, Dims... dims) const {
+//     return off * (prod_func < AXES - (sizeof...(Dims)), AXES > ()(shapes)) + operator()(dims...);
+//   }
+
+//   constexpr inline size_t operator()(int t) const {
+//     return t;
+//   }
+
+
+// };
+
 
 }; // namespace feather
 
