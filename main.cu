@@ -1,137 +1,62 @@
 #include <iostream>
 
+#include "feather/cuda.h"
+
+using namespace feather;
 
 template<typename T>
-__global__ void start(const T s){
-  printf("host access val %f \n",s.val);
-  s.cuda();
-}
-
-template<typename T>
-struct func
+class bias_add : public cuda::kernel
 {
-  T val;
+public:
+  T bias;
+  T* buffer;
+  size_t len;
 
-  __device__ void cuda() const{
-    printf("device access val %f [%d]\n",val,threadIdx.x);
+  virtual __device__ void cuda() const{
+    const int tid = cuda::globalThreadIndex();
+    if(tid < len)
+        buffer[tid] = bias;
   }
 
-  enum{ C_N = 2 };
+  enum{ THREADS = 32 };
 
-  void operator()()
+  virtual void operator()()
   {
-    start<<<1, C_N>>>(*this);
+    printf("hi\n");
+    dim3 threads(THREADS);
+    dim3 grid((len + THREADS - 1) / THREADS);
+    cuda::launch<<<grid, threads>>>(*this);
   }
 
 };
 
-template<typename T>
-__global__ void start_correct(const func<T> s){
-  printf("host access val %f \n", s.val);
-  s.cuda();
-}
-
-
-
-// template<typename T>
-// __global__ void start(const T s){
-//   printf("host access val %f \n",s.val);
-//   s.cuda();
-// }
-
-// struct GodKernel
-// {
-//   virtual __device__ void operator()() const{}
-//   virtual __device__ void cuda() const{}
-// };
-
-
-// template<typename T>
-// struct func : GodKernel
-// {
-//     T val;
-
-//     enum{ C_N = 2 };
-
-//     __device__ void operator()() const{
-//         start<<<1, C_N>>>(*this);
-//     }
-//     virtual __device__ void cuda() const{
-//         printf("device access val %f [%d]\n", val, threadIdx.x);
-//     }
-// };
-
-
-// template<typename T>
-// __global__ void start(const T s){
-//   printf("host access val %f \n",s.val);
-//   s();
-// }
-
-// template<typename T>
-// struct func
-// {
-//   T val;
-
-//   __device__ void operator()() const{
-//     printf("device access val %f [%d]\n",val,threadIdx.x);
-//   }
-
-//   enum{ C_N = 2 };
-
-//   void launch()
-//   {
-//     start<<<1, C_N>>>(*this);
-//   }
-
-// };
-
-// template<typename T>
-// __global__ void start_correct(const func<T> s){
-//   printf("host access val %f \n", s.val);
-//   s();
-// }
-
-
-// template <typename Function, typename... Arguments>
-// __global__
-// void Kernel(Function f, Arguments... args)
-// {
-//     f(args...);
-// }
-
-// template <typename... Arguments>
-// void cudaLaunch(void(*f)(Arguments... args), Arguments... args)
-// {
-
-//     const grid;
-//     f<<<1, 
-//         2, 
-//         p.getSharedMemBytes(),
-//         p.getStream()>>>(args...);
-// }
-
-
 
 int main(int argc, char const *argv[])
 {
-  cudaError_t err;
+  
+  std::cout << "found "<< cuda::device::count() << " devices." << std::endl;
+    
+  bias_add<float> s;
+  s.bias = 3.f;
+  s.len = 100;
+  s.buffer = cuda::memory::device::allocate<float>(s.len);
 
-  func<float> s;
-  s.val = 3.f;
-
-  // launch cuda kernel <-- WORKS
-  start_correct<<<1, 2>>>(s);
-  cudaDeviceSynchronize();
-  if (err != cudaSuccess) printf("Error: %s\n", cudaGetErrorString(err));
-
-
-  // launch cuda kernel <-- DOES NOT WORK
+  // call cuda
   s();
-  cudaDeviceSynchronize();
-  err = cudaGetLastError();
-  if (err != cudaSuccess) printf("Error: %s\n", cudaGetErrorString(err));
+  s.device_synchronize();
 
+  // get result
+  float *rsl = new float[s.len];
+  cuda::memory::copy(rsl, s.buffer, s.len);
+
+  // shout out 3.f
+  for (int i = 0; i < 10; ++i)
+  {
+      std::cout << rsl[i] << std::endl;
+        
+  }
+
+  
 
   return 0;
  
