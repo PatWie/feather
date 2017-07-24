@@ -57,7 +57,8 @@ public:
     template<typename... T>
     inline Dtype operator()(const T&... t) {
         const int n = sizeof...(T);
-        return (Dtype) buffer[index<n>(shape_.data())(t...)];
+        return (Dtype) buffer[index<n>(shape_)(t...)];
+        // return (Dtype) buffer[index<n>(shape_.data())(t...)];
     }
 
     void allocate(){
