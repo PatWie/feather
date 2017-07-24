@@ -14,6 +14,12 @@ namespace feather {
 namespace cuda {
 
 
+template<typename A, typename B>
+A div_floor(A len, B threads){
+    return (len + threads - 1) / threads;
+}
+
+
 using status_t = cudaError_t;
 using native_word_t = unsigned;
 
