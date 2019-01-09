@@ -1,3 +1,6 @@
+**This is only a draft/attempt to create a C++11 version of the CUDA API. However, C++11 does not work that well with NVCC compiler. The most useful function (*computing indicies of nd-arrays*) is now located at https://github.com/PatWie/cuda_utils. And this archive is read-only. If the nvcc gets better, I will revisit this attempt here.**
+
+
 # Feather - CUDA C++11 API
 
 An attempt to create a C++11 cuda wrapper *without* being obtrusive or encapsulate all cuda call.
@@ -88,7 +91,7 @@ feather::array<float, feather::managed_resource> A2(100);
 feather::array<float, feather::pinned_resource> A3(100);
 ````
 
-It does not handle allocation magically and automatically. You still can decide when to (de-)allocate memory on your. It removes unnecessary syntax and use a single interface.
+It does not handle allocation magically and automatically. You still can decide when to (de-)allocate memory on your. It removes unnecessary syntax and uses a single interface.
 
 
 ## Tensor-Shape
@@ -138,7 +141,9 @@ if(C.valid(Ch, Cw))
     C(Ch, Cw) = Cval;
 ````
 
-While this is a fairly simple example, using template magic it gets the same optimization from the compiler but is much more understandable. Further specifying the shape allows to validate memory access.
+While this is a fairly simple example, using template magic it gets the ~~same optimization from the compiler~~ (apparently the nvcc cannot optimize everything) but is much more understandable. Further specifying the shape allows to validate memory access.
+
+Note, the register usage can increase sometimes when using the approach from this library.
 
 
 ## I do not use it
